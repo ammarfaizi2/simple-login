@@ -28,7 +28,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 	if (!password_verify($_POST["old_password"], $st[0])) {
 		$msg = "Wrong old password";
-		goto show_html;	
+		goto show_html;
 	}
 
 	$c = strlen($_POST["new_password"]);
@@ -74,9 +74,7 @@ if (isset($msg)) {
 <?php if (isset($msg)): ?>
 <script type="text/javascript">alert("<?php echo $msg; ?>");</script>
 <?php endif ?>
-<div class="photo-cage">
-	<img class="photo" />
-</div>
+<a href="profile.php"><h3>Back to Profile</h3></a>
 <form method="POST" action="">
 <table class="table-info">
 	<tr><td align="left">Enter Old Password</td><td>:</td><td align="left"><input type="password" name="old_password" required="1"/></td></tr>

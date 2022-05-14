@@ -1,5 +1,7 @@
 <?php
 
+const PHOTO_PATH = "/storage/files";
+
 session_start();
 
 if (!isset($_SESSION["user"])) {
@@ -9,7 +11,7 @@ if (!isset($_SESSION["user"])) {
 require __DIR__."/auto_logout.php";
 
 $pdo = require __DIR__."/conn.php";
-$st = $pdo->prepare("SELECT first_name, last_name, username, email FROM users WHERE id = ?");
+$st = $pdo->prepare("SELECT first_name, last_name, username, email, photo FROM users WHERE id = ?");
 $st->execute([$_SESSION["user"]]);
 $u = $st->fetch(\PDO::FETCH_ASSOC);
 
@@ -18,6 +20,17 @@ if (!is_null($u["last_name"])) {
 	$fullname .= " ".$u["last_name"];
 }
 
+$photo = NULL;
+if (!is_null($u["photo"])) {
+	$st = $pdo->prepare("SELECT LOWER(HEX(md5_sum)), LOWER(HEX(sha1_sum)), ext FROM files WHERE id = ? LIMIT 1");
+	$st->execute([$u["photo"]]);
+	$tmp = $st->fetch(PDO::FETCH_NUM);
+	if ($tmp)
+		$photo = PHOTO_PATH . "/" . $tmp[0] . "_" . $tmp[1] . "." . $tmp[2];
+}
+if (is_null($photo)) 
+	$photo = "default_photo.jpg";
+
 ?><!DOCTYPE html>
 <html>
 <head>
@@ -25,14 +38,14 @@ if (!is_null($u["last_name"])) {
 	<style type="text/css">
 		.profile-cage {
 			width: 500px;
-			height: 500px;
+			height: 600px;
 			border: 1px solid #000;
 			margin: auto;
 			text-align: center;
 		}
 		.profile-info {
 			width: 400px;
-			height: 300px;
+			height: 400px;
 			border: 1px solid #000;
 			margin: auto;
 			padding-top: 10px;
@@ -40,6 +53,7 @@ if (!is_null($u["last_name"])) {
 		}
 		.table-info {
 			margin: auto;
+			margin-top: 40px;
 		}
 		a {
 			text-decoration: none;
@@ -65,9 +79,18 @@ if (!is_null($u["last_name"])) {
 			<?php } else if (isset($_GET["change_password"])) { ?>
 			<?php require __DIR__."/change_password.php"; ?>
 			<?php } else { ?>
-				<div class="photo-cage">
-					<img class="photo" />
-				</div>
+				<?php if (isset($_GET["action"])) {
+					switch ($_GET["action"]) {
+					case "edit_photo":
+						require __DIR__."/edit_photo.php";
+						break;
+					}
+				} else { ?>
+					<div class="photo-cage">
+						<img class="photo" src="<?php echo htmlspecialchars($photo, ENT_QUOTES, "UTF-8"); ?>" />
+					</div>
+					<a href="?action=edit_photo">Edit Photo</a>
+				<?php } ?>
 				<table class="table-info">
 					<tr><td align="left">First Name</td><td>:</td><td align="left"><?php echo htmlspecialchars($u["first_name"]); ?></td></tr>
 					<tr><td align="left">Last Name</td><td>:</td><td align="left"><?php echo htmlspecialchars($u["last_name"]); ?></td></tr>
